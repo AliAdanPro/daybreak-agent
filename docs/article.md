@@ -77,19 +77,19 @@ The challenges were real and all of them taught me something:
 ## AWS Services Used / Architecture Overview
 
 ```
-EventBridge Scheduler ──(6:00 AM PKT daily, no human)──> AWS Lambda (Python 3.13)
-                                                            │
-                                    ┌───────────────────────┼─────────────────┐
-                                    ▼                       ▼                 ▼
+EventBridge Scheduler --(6:00 AM PKT daily, no human)--> AWS Lambda (Python 3.13)
+                                                            |
+                                    +-----------------------+-----------------+
+                                    v                       v                 v
                              Open-Meteo API           public RSS feeds   Amazon Bedrock
                              (weather, free)          (headlines)        (Nova Micro writes
-                                    │                       │             the brief)
-                                    └───────────┬───────────┘                 │
-                                                ▼                             │
-                                          Amazon SNS  <──────────────────────┘
-                                                │
-                                                ▼
-                                          📧 my inbox (before I wake up)
+                                    |                       |             the brief)
+                                    +-----------+-----------+                 |
+                                                v                             |
+                                          Amazon SNS  <-----------------------+
+                                                |
+                                                v
+                                        (email) my inbox (before I wake up)
 ```
 
 **[SCREENSHOT 2: EventBridge schedule in the console — cron + Asia/Karachi timezone visible]**
