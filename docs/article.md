@@ -2,7 +2,6 @@
 
 > **Publishing checklist (delete this block before publishing):**
 > - Tag the article with `agents` (also add `challenge` and `aws-builders`)
-> - Replace `[REPO-URL]` with the public GitHub link
 > - Insert the four screenshots where marked
 > - Publish before July 20, 2026, 1:00 PM PT
 
@@ -129,6 +128,6 @@ $0.01. Measured usage so far rounds to zero.
 
 ## Link to App or Repo
 
-Source code, IAM policies, deploy script, and docs: **[REPO-URL]**
+Source code, IAM policies, deploy script, and docs: **https://github.com/AliAdanPro/daybreak-agent**
 
 *Tags: #agents #challenge #aws-builders*
