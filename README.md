@@ -1,6 +1,7 @@
 # DayBreak — an always-on morning brief agent ☀️
 
 **Weekend Agent Challenge submission (AWS Builder Center, July 17–20, 2026).**
+📖 **Read the story:** [Weekend Agent Challenge: DayBreak — the morning brief that writes itself](https://builder.aws.com/content/3GdZOr6eF0NaewoIWikF0ZpLV6i/weekend-agent-challenge-daybreak-the-morning-brief-that-writes-itself)
 
 DayBreak is a personal AI agent that runs completely unattended. Every morning at
 6:00 AM (Pakistan time) it wakes up on a schedule, gathers today's weather for
