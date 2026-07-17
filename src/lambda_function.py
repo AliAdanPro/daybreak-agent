@@ -174,6 +174,23 @@ def send_email(subject, body):
     boto3.client("sns").publish(TopicArn=SNS_TOPIC_ARN, Subject=subject, Message=body)
 
 
+def describe_trigger(event):
+    """Honestly describe how this run was started.
+
+    The EventBridge schedule's target input injects context attributes
+    (schedule ARN + scheduled time), so a scheduler-fired run identifies
+    itself; anything else is reported as a manual test.
+    """
+    if isinstance(event, dict) and event.get("source") == "aws.scheduler":
+        schedule = event.get("schedule_arn", "").split("/")[-1] or "unknown"
+        return (
+            "ran unattended on AWS Lambda, fired by Amazon EventBridge Scheduler "
+            f"(schedule '{schedule}', scheduled for {event.get('scheduled_time', '?')} UTC). "
+            "Nobody pressed a button."
+        )
+    return "ran on AWS Lambda (manual test run)."
+
+
 def lambda_handler(event, context):
     if not SNS_TOPIC_ARN:
         raise RuntimeError("SNS_TOPIC_ARN environment variable is not set")
@@ -204,9 +221,8 @@ def lambda_handler(event, context):
         body = fallback_brief(weather, headlines, now_local)
 
     body += (
-        f"\n\n--\nDayBreak ran unattended at {now_local.strftime('%H:%M')} {TZ_LABEL} "
-        "on AWS Lambda, triggered by Amazon EventBridge Scheduler. "
-        "Nobody pressed a button."
+        f"\n\n--\nDayBreak, {now_local.strftime('%H:%M')} {TZ_LABEL}: "
+        + describe_trigger(event)
     )
     # SNS subjects must be plain ASCII, max 100 chars.
     subject = f"Your Morning Brief - {now_local.strftime('%a, %d %b %Y')}"
