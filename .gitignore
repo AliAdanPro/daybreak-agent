@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.zip
+build/
+out.json
+.env
+.venv/
+venv/
+.aws/
+*.log
