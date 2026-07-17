@@ -1,4 +1,4 @@
-# DayBreak — one-shot deployment script (AWS CLI, PowerShell 5.1 compatible)
+# DayBreak — one-shot deployment script (AWS CLI, Windows PowerShell 5.1 compatible)
 #
 # Creates everything the agent needs in your AWS account:
 #   SNS topic + email subscription -> IAM roles -> Lambda function -> EventBridge schedule
@@ -7,6 +7,12 @@
 #   powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1 -Email you@example.com
 #
 # Safe to re-run: each step skips or updates resources that already exist.
+#
+# Two Windows-specific lessons are baked in here (learned the hard way):
+#   1. The AWS CLI is a native exe — it signals failure via $LASTEXITCODE, not
+#      PowerShell exceptions, so every retry loop checks the exit code.
+#   2. Passing inline JSON to a native exe mangles the quotes in PowerShell 5.1,
+#      so complex parameters (like --target) are passed as file:// documents.
 
 param(
     [Parameter(Mandatory = $true)][string]$Email,
@@ -26,14 +32,16 @@ $ScheduleName = "daybreak-6am-brief"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 
 function Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
+function Fail($msg) { Write-Host "FAILED: $msg" -ForegroundColor Red; exit 1 }
 
 Step "Verifying AWS credentials"
 $AccountId = aws sts get-caller-identity --query Account --output text
-if (-not $AccountId) { throw "AWS CLI is not configured. Run 'aws configure' first." }
+if ($LASTEXITCODE -ne 0) { Fail "AWS CLI is not configured. Run 'aws configure' first." }
 Write-Host "Account: $AccountId  Region: $Region"
 
 Step "Creating SNS topic + email subscription"
 $TopicArn = aws sns create-topic --name $TopicName --query TopicArn --output text
+if ($LASTEXITCODE -ne 0) { Fail "could not create SNS topic" }
 Write-Host "Topic: $TopicArn"
 $Subs = aws sns list-subscriptions-by-topic --topic-arn $TopicArn --query "Subscriptions[?Endpoint=='$Email']" --output text
 if (-not $Subs) {
@@ -44,14 +52,12 @@ if (-not $Subs) {
 }
 
 Step "Creating Lambda execution role"
-$LambdaRoleArn = ""
-try {
-    $LambdaRoleArn = aws iam get-role --role-name $LambdaRoleName --query Role.Arn --output text 2>$null
-} catch {}
-if (-not $LambdaRoleArn) {
+$LambdaRoleArn = aws iam get-role --role-name $LambdaRoleName --query Role.Arn --output text 2>$null
+if ($LASTEXITCODE -ne 0) {
     $LambdaRoleArn = aws iam create-role --role-name $LambdaRoleName `
         --assume-role-policy-document file://$RepoRoot/infra/lambda-trust-policy.json `
         --query Role.Arn --output text
+    if ($LASTEXITCODE -ne 0) { Fail "could not create Lambda role" }
 }
 aws iam put-role-policy --role-name $LambdaRoleName --policy-name daybreak-lambda-permissions `
     --policy-document file://$RepoRoot/infra/lambda-permissions-policy.json
@@ -66,76 +72,65 @@ Compress-Archive -Path (Join-Path $RepoRoot "src\lambda_function.py") -Destinati
 Write-Host "Packaged: $ZipPath"
 
 Step "Creating (or updating) the Lambda function"
-$FunctionArn = ""
-try {
-    $FunctionArn = aws lambda get-function --function-name $FunctionName `
-        --query Configuration.FunctionArn --output text 2>$null
-} catch {}
-if ($FunctionArn) {
+$FunctionArn = aws lambda get-function --function-name $FunctionName `
+    --query Configuration.FunctionArn --output text 2>$null
+if ($LASTEXITCODE -eq 0) {
     aws lambda update-function-code --function-name $FunctionName --zip-file fileb://$ZipPath | Out-Null
     Write-Host "Existing function updated: $FunctionArn"
 } else {
-    # New IAM roles take a few seconds to become assumable by Lambda; retry.
+    # A brand-new IAM role takes ~10s to become assumable by Lambda; retry on exit code.
     $attempt = 0
-    while ($true) {
+    do {
         $attempt++
-        try {
-            $FunctionArn = aws lambda create-function --function-name $FunctionName `
-                --runtime python3.13 --handler lambda_function.lambda_handler `
-                --zip-file fileb://$ZipPath --role $LambdaRoleArn `
-                --timeout 60 --memory-size 256 `
-                --environment "Variables={SNS_TOPIC_ARN=$TopicArn}" `
-                --query FunctionArn --output text
-            break
-        } catch {
-            if ($attempt -ge 6) { throw }
-            Write-Host "Role not ready yet (attempt $attempt/6), waiting 10s..."
-            Start-Sleep -Seconds 10
-        }
-    }
+        $FunctionArn = aws lambda create-function --function-name $FunctionName `
+            --runtime python3.13 --handler lambda_function.lambda_handler `
+            --zip-file fileb://$ZipPath --role $LambdaRoleArn `
+            --timeout 60 --memory-size 256 `
+            --environment "Variables={SNS_TOPIC_ARN=$TopicArn}" `
+            --query FunctionArn --output text
+        if ($LASTEXITCODE -eq 0) { break }
+        if ($attempt -ge 6) { Fail "could not create Lambda function after $attempt attempts" }
+        Write-Host "Role not ready yet (attempt $attempt/6), waiting 10s..."
+        Start-Sleep -Seconds 10
+    } while ($true)
     Write-Host "Function created: $FunctionArn"
 }
 
 Step "Creating scheduler role"
-$SchedulerRoleArn = ""
-try {
-    $SchedulerRoleArn = aws iam get-role --role-name $SchedulerRoleName --query Role.Arn --output text 2>$null
-} catch {}
-if (-not $SchedulerRoleArn) {
+$SchedulerRoleArn = aws iam get-role --role-name $SchedulerRoleName --query Role.Arn --output text 2>$null
+if ($LASTEXITCODE -ne 0) {
     $SchedulerRoleArn = aws iam create-role --role-name $SchedulerRoleName `
         --assume-role-policy-document file://$RepoRoot/infra/scheduler-trust-policy.json `
         --query Role.Arn --output text
+    if ($LASTEXITCODE -ne 0) { Fail "could not create scheduler role" }
 }
 aws iam put-role-policy --role-name $SchedulerRoleName --policy-name daybreak-scheduler-invoke `
     --policy-document file://$RepoRoot/infra/scheduler-invoke-policy.json
 Write-Host "Role: $SchedulerRoleArn"
 
 Step "Creating (or updating) the EventBridge schedule ($ScheduleCron, $ScheduleTimezone)"
-$Target = "{`"Arn`":`"$FunctionArn`",`"RoleArn`":`"$SchedulerRoleArn`"}"
-$existing = ""
-try {
-    $existing = aws scheduler get-schedule --name $ScheduleName --query Name --output text 2>$null
-} catch {}
+# Inline JSON gets its quotes stripped by PowerShell 5.1 -> write the target to a file.
+$TargetFile = Join-Path $BuildDir "schedule-target.json"
+@{ Arn = $FunctionArn; RoleArn = $SchedulerRoleArn } | ConvertTo-Json | Set-Content -Encoding Ascii $TargetFile
+aws scheduler get-schedule --name $ScheduleName --query Name --output text 2>$null | Out-Null
+$exists = ($LASTEXITCODE -eq 0)
 $attempt = 0
-while ($true) {
+do {
     $attempt++
-    try {
-        if ($existing) {
-            aws scheduler update-schedule --name $ScheduleName `
-                --schedule-expression $ScheduleCron --schedule-expression-timezone $ScheduleTimezone `
-                --flexible-time-window Mode=OFF --target $Target | Out-Null
-        } else {
-            aws scheduler create-schedule --name $ScheduleName `
-                --schedule-expression $ScheduleCron --schedule-expression-timezone $ScheduleTimezone `
-                --flexible-time-window Mode=OFF --target $Target | Out-Null
-        }
-        break
-    } catch {
-        if ($attempt -ge 6) { throw }
-        Write-Host "Scheduler role not ready yet (attempt $attempt/6), waiting 10s..."
-        Start-Sleep -Seconds 10
+    if ($exists) {
+        aws scheduler update-schedule --name $ScheduleName `
+            --schedule-expression $ScheduleCron --schedule-expression-timezone $ScheduleTimezone `
+            --flexible-time-window Mode=OFF --target file://$TargetFile | Out-Null
+    } else {
+        aws scheduler create-schedule --name $ScheduleName `
+            --schedule-expression $ScheduleCron --schedule-expression-timezone $ScheduleTimezone `
+            --flexible-time-window Mode=OFF --target file://$TargetFile | Out-Null
     }
-}
+    if ($LASTEXITCODE -eq 0) { break }
+    if ($attempt -ge 6) { Fail "could not create schedule after $attempt attempts" }
+    Write-Host "Scheduler role not ready yet (attempt $attempt/6), waiting 10s..."
+    Start-Sleep -Seconds 10
+} while ($true)
 Write-Host "Schedule ready: $ScheduleName"
 
 Step "DONE"

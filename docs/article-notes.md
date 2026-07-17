@@ -30,7 +30,24 @@ published on AWS Builder Center before **July 20, 2026, 1:00 PM PT** (July 21, 1
   to a plain assembled brief — the agent always reports back.
 
 ## Challenges encountered (fill in as they happen)
-- (pending)
+- **IAM eventual consistency**: the very first `lambda create-function` failed with
+  "The role defined for the function cannot be assumed by Lambda" — a brand-new IAM
+  role takes ~10s to propagate. Fixed with an exit-code-based retry loop.
+- **PowerShell 5.1 vs AWS CLI quoting**: passing the schedule's `--target` JSON inline
+  stripped the double quotes (`{Arn:...}` instead of `{"Arn":...}`). Fixed by writing
+  the JSON to a file and passing `file://` — a good habit for ANY complex CLI param.
+- **Also learned**: the AWS CLI is a native exe, so PowerShell `try/catch` never fires
+  on failure; you must check `$LASTEXITCODE` after every call.
+- **Bedrock model access page retired (July 2026)**: models now auto-enable on first
+  invocation — our first Lambda test call enabled Nova Micro automatically, zero clicks.
+
+## Cost-safety measures taken (article material)
+- Account uses the AWS **Free plan** ($100 credits, card cannot be charged; verified
+  via `aws freetier get-account-plan-state`).
+- Zero-spend budget alarm (`daybreak-zero-spend-alarm`): emails the owner if actual
+  spend exceeds $0.01 in any month.
+- Whole architecture is pay-per-use: one ~10s Lambda run/day, ~$0.0001 of Nova Micro
+  per brief, everything inside permanent free allowances.
 
 ## Evidence to capture for the article 📸
 - [ ] Screenshot: EventBridge schedule in the console (cron + timezone visible)
