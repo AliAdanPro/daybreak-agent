@@ -52,4 +52,10 @@ brief. Expected monthly cost: **well under $0.10**.
 
 ## Deploy
 
-See [docs/deployment.md](docs/deployment.md) (added during the challenge build).
+See [docs/deployment.md](docs/deployment.md) for the full from-scratch guide
+(account setup → CLI → `scripts/deploy.ps1`) and the teardown checklist.
+
+## Status
+
+Submitted to the Weekend Agent Challenge on **July 17, 2026** — in production
+since that evening, emailing a brief every morning at 6:00 AM PKT, unattended.

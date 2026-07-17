@@ -3,15 +3,16 @@
 Target article: **"Weekend Agent Challenge: DayBreak"** — tag `agents`, ≥500 words,
 published on AWS Builder Center before **July 20, 2026, 1:00 PM PT** (July 21, 1:00 AM PKT).
 
-## Required sections checklist
-- [ ] Title contains "Weekend Agent Challenge: [Name of Your Agent]"
-- [ ] Tag `agents` added
-- [ ] Vision & What the Agent Does
-- [ ] How You Built It (decisions, challenges, fixes)
-- [ ] AWS Services Used / Architecture Overview (+ diagram)
-- [ ] What You Learned
-- [ ] Public GitHub repo link (must stay public!)
-- [ ] ≥500 words
+## Required sections checklist — ALL DONE, published Jul 17, 2026 ✅
+Article: <https://builder.aws.com/content/3GdZOr6eF0NaewoIWikF0ZpLV6i/weekend-agent-challenge-daybreak-the-morning-brief-that-writes-itself>
+- [x] Title contains "Weekend Agent Challenge: [Name of Your Agent]"
+- [x] Tag `agents` added
+- [x] Vision & What the Agent Does
+- [x] How You Built It (decisions, challenges, fixes)
+- [x] AWS Services Used / Architecture Overview (+ diagram)
+- [x] What You Learned
+- [x] Public GitHub repo link (must stay public!)
+- [x] ≥500 words (~1,000 published)
 
 ## Key decisions (why — for the "How You Built It" section)
 - **Morning brief agent** chosen over watcher/digest ideas: it is the challenge's own
@@ -49,8 +50,9 @@ published on AWS Builder Center before **July 20, 2026, 1:00 PM PT** (July 21, 1
 - Whole architecture is pay-per-use: one ~10s Lambda run/day, ~$0.0001 of Nova Micro
   per brief, everything inside permanent free allowances.
 
-## Evidence to capture for the article 📸
-- [ ] Screenshot: EventBridge schedule in the console (cron + timezone visible)
-- [ ] Screenshot: the brief email in the inbox, timestamped ~6:00 AM
-- [ ] Screenshot: CloudWatch log of an unattended run
-- [ ] Architecture diagram (mermaid in README, export image for article)
+## Evidence captured for the article 📸 — all in the published article + docs/screenshots/
+- [x] Screenshot: EventBridge schedule in the console (cron + timezone visible)
+- [x] Screenshot: the brief email in the inbox (scheduler-fired 20:25 PKT run)
+- [x] Screenshot: CloudWatch log of the unattended run
+- [x] Architecture diagram (mermaid rendered by GitHub, screenshot in article)
+- [x] Footer close-up: the email naming its own schedule + AWS-injected scheduled time
