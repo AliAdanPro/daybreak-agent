@@ -73,10 +73,16 @@ involved.
 
 ```powershell
 aws scheduler delete-schedule --name daybreak-6am-brief
+aws cloudwatch delete-alarms --alarm-names daybreak-run-failed
 aws lambda delete-function --function-name daybreak
+aws logs delete-log-group --log-group-name /aws/lambda/daybreak
 aws sns delete-topic --topic-arn <topic-arn>
+aws budgets delete-budget --account-id <account-id> --budget-name daybreak-zero-spend-alarm
 aws iam delete-role-policy --role-name daybreak-lambda-role --policy-name daybreak-lambda-permissions
 aws iam delete-role --role-name daybreak-lambda-role
 aws iam delete-role-policy --role-name daybreak-scheduler-role --policy-name daybreak-scheduler-invoke
 aws iam delete-role --role-name daybreak-scheduler-role
 ```
+
+Finally, delete the `daybreak-admin` access key in the IAM console
+(IAM → Users → daybreak-admin → Security credentials → deactivate/delete the key).
