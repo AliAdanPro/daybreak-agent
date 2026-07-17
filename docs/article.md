@@ -27,7 +27,9 @@ independently, so if a news feed is down the brief ships without it, and if
 the AI call itself ever fails, the agent assembles a plain fallback brief from
 the raw data instead of staying silent.
 
-**[SCREENSHOT 1: the 6:00 AM brief email in my inbox, timestamp visible]**
+**[SCREENSHOT 1: the brief email arriving in my inbox — upload `docs/screenshots/1-email-header-2025pkt.png`]**
+
+*(The complete email — headlines and all — is in the repo under `docs/screenshots/`.)*
 
 And because the whole point of the challenge is that it happened without me,
 each email's footer states exactly how the run was triggered — the
