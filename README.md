@@ -1,63 +1,22 @@
-# DayBreak — an always-on morning brief agent ☀️
+# Daybreak Agent 🌅
 
-**Weekend Agent Challenge submission (AWS Builder Center, July 17–20, 2026).**
-📖 **Read the story:** [Weekend Agent Challenge: DayBreak — the morning brief that writes itself](https://builder.aws.com/content/3GdZOr6eF0NaewoIWikF0ZpLV6i/weekend-agent-challenge-daybreak-the-morning-brief-that-writes-itself)
+An event-driven, serverless AI agent deployed on AWS that autonomously aggregates external API data and generates daily briefings using Amazon Bedrock[cite: 1].
 
-DayBreak is a personal AI agent that runs completely unattended. Every morning at
-6:00 AM (Pakistan time) it wakes up on a schedule, gathers today's weather for
-Islamabad and the latest world + tech headlines, asks **Amazon Bedrock (Nova
-Micro)** to write a short, friendly morning brief, and emails it via **Amazon
-SNS** — all before its owner is awake. Nobody presses a button.
+## 🏗️ Architecture & Tech Stack
+*   **Compute:** AWS Lambda (Python 3.x)[cite: 1]
+*   **AI/LLM:** Amazon Bedrock (Nova Micro) via `boto3`[cite: 1]
+*   **Orchestration:** Amazon EventBridge (Cron Scheduling)[cite: 1]
+*   **Integrations:** Open-Meteo API, RSS Feeds[cite: 1]
+*   **Security:** AWS IAM (Least Privilege Execution Roles)[cite: 1]
 
-## Architecture
+## ⚙️ Core Workflow
+1.  **Trigger:** Amazon EventBridge wakes the Lambda function on a defined schedule[cite: 1].
+2.  **Ingestion:** Python scripts fetch live data from external weather and news APIs[cite: 1].
+3.  **Processing:** Amazon Bedrock processes the raw payloads to synthesize a natural-language daily briefing[cite: 1].
+4.  **Delivery:** The final briefing is routed to the end user.
 
-```mermaid
-flowchart LR
-    EB[Amazon EventBridge Scheduler<br/>cron: 6:00 AM PKT daily] -->|triggers| L[AWS Lambda<br/>Python 3.13]
-    L -->|fetch forecast| OM[Open-Meteo API<br/>free, no key]
-    L -->|fetch headlines| RSS[Public RSS feeds<br/>BBC World, Ars Technica]
-    L -->|write the brief| BR[Amazon Bedrock<br/>Nova Micro]
-    L -->|publish email| SNS[Amazon SNS topic] --> Email[📧 Inbox]
-    L -.->|logs every run| CW[Amazon CloudWatch Logs]
-```
-
-| AWS service | Role |
-|---|---|
-| **EventBridge Scheduler** | Timezone-aware cron trigger (`cron(0 6 * * ? *)`, Asia/Karachi) — the "always-on" part |
-| **AWS Lambda** | Runs the agent code (Python, standard library + boto3 only, zero external packages) |
-| **Amazon Bedrock (Nova Micro)** | Turns raw weather + headlines into a warm, human morning brief |
-| **Amazon SNS** | Delivers the brief to email |
-| **CloudWatch Logs** | Evidence of every unattended run |
-| **IAM** | Least-privilege roles for Lambda and the Scheduler |
-
-## Repository layout
-
-```
-src/lambda_function.py        The entire agent (single file, no dependencies)
-infra/*.json                  IAM trust + permission policies
-scripts/local_test.py         Run the data-gathering logic locally
-docs/                         Architecture notes and article material
-```
-
-## Resilience
-
-Every data source is wrapped independently: if one RSS feed is down the brief
-still ships with the rest; if Bedrock itself fails, a plain-text fallback brief
-is assembled from the raw data so the agent **always reports back**.
-
-## Cost
-
-Everything fits in the AWS Free Tier; Nova Micro costs fractions of a cent per
-brief. Expected monthly cost: **well under $0.10**.
-
-## Deploy
-
-See [docs/deployment.md](docs/deployment.md) for the full from-scratch guide
-(account setup → CLI → `scripts/deploy.ps1`) and the teardown checklist.
-
-## Status
-
-Submitted to the Weekend Agent Challenge on **July 17, 2026** — in production
-since that evening, emailing a brief every morning at 6:00 AM PKT, unattended.
-
-Update: Won Jacket 🥳🥳
+## 🧪 Quality & Testing Strategy (In Progress)
+*As part of an ongoing SDET initiative, this repository is being retrofitted with automated quality gates:*
+*   **API Mocking:** Pytest fixtures to simulate external API responses.
+*   **Unit Tests:** Validating Bedrock payload generation without triggering live AWS billing[cite: 1].
+*   **CI/CD:** GitHub Actions pipeline to run tests automatically on every push.
