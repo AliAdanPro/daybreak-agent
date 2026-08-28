@@ -59,3 +59,5 @@ See [docs/deployment.md](docs/deployment.md) for the full from-scratch guide
 
 Submitted to the Weekend Agent Challenge on **July 17, 2026** — in production
 since that evening, emailing a brief every morning at 6:00 AM PKT, unattended.
+
+Update: Won Jacket 🥳🥳
