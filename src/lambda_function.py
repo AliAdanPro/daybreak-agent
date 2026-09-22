@@ -237,3 +237,7 @@ def lambda_handler(event, context):
     }
     logger.info(json.dumps(result))
     return result
+
+if __name__ == "__main__":
+    # Allow running directly via Docker / CLI for demonstration
+    lambda_handler({"source": "manual-cli"}, None)
