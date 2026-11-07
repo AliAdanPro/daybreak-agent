@@ -1,5 +1,6 @@
 # Daybreak Agent 🌅
 ![CI/CD Pipeline](https://github.com/AliAdanPro/daybreak-agent/actions/workflows/ci.yml/badge.svg)
+
 An event-driven, serverless AI agent deployed on AWS that autonomously aggregates external API data and generates daily briefings using Amazon Bedrock.
 
 ## 🏗️ Architecture & Tech Stack
